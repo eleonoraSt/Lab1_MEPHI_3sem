@@ -7,7 +7,6 @@ qt_standard_project_setup()
 
 qt_add_executable(Lab1_3sem
     WIN32 MACOSX_BUNDLE
-    main.cpp
     include/BinaryTree.h
     main.cpp
 )
