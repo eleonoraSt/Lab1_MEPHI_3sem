@@ -18,16 +18,32 @@ private:
      * 1  - a > b
      */
 
-    void deleteNode(Node* node) {
-        if (node->left) deleteNode(node->left);
-        if (node->right) deleteNode(node->right);
+    void DeleteNode(Node* node) {
+        if (node->left) DeleteNode(node->left);
+        if (node->right) DeleteNode(node->right);
         delete node;
     }
+
+    void Traverse(Node* node, void (*func)(T), const char* order) {
+        for (int index = 0; index < 3; index++) {
+            switch (order[index]) {
+            case 'L':
+                if (node->left) Traverse(node->left, func, order);
+                break;
+            case 'R':
+                if (node->right) Traverse(node->right, func, order);
+                break;
+            default:
+                func(node->val);
+                break;
+            }
+        }
+    }
 public:
-    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
+    BinaryTree(int (*compare)(T, T), const char* traversal): head(nullptr), cmp(compare) {}
 
     ~BinaryTree() {
-        if (head) deleteNode(head);
+        if (head) DeleteNode(head);
     }
 
     void Insert(T item) {
