@@ -42,8 +42,6 @@ private:
 public:
     BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
 
-    BinaryTree(int (*compare)(T, T), const char* order): head(nullptr), cmp(compare) {}
-
     ~BinaryTree() {
         if (head) DeleteNode(head);
     }
@@ -86,6 +84,26 @@ public:
             lookAt = cmp(item, lookAt->val) == -1 ? lookAt->left : lookAt->right;
         }
         return false;
+    }
+
+    BinaryTree<T> Map(T (*func)(T), const char* order) {
+        BinaryTree<T> result = BinaryTree<T>(cmp);
+        auto append = [&](T val) {result.Insert(func(val));};
+        Traverse(head, append, order);
+        return result;
+    }
+
+    BinaryTree<T> Where(bool (*func)(T), const char* order) {
+        BinaryTree<T> result = BinaryTree<T>(cmp);
+        auto append = [&](T val) {if (func(val)) result.Insert(val);};
+        Traverse(head, append, order);
+        return result;
+    }
+
+    T Reduce(T (*func)(T, T), T initial, const char* order) {
+        auto calculate = [&](T val) {initial = func(initial, val);};
+        Traverse(head, calculate, order);
+        return initial;
     }
 };
 
