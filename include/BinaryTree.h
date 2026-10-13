@@ -40,7 +40,9 @@ private:
         }
     }
 public:
-    BinaryTree(int (*compare)(T, T), const char* traversal): head(nullptr), cmp(compare) {}
+    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
+
+    BinaryTree(int (*compare)(T, T), const char* order): head(nullptr), cmp(compare) {}
 
     ~BinaryTree() {
         if (head) DeleteNode(head);
@@ -48,12 +50,33 @@ public:
 
     void Insert(T item) {
         Node node = {item, nullptr, nullptr};
-        Node* insertAfter = head;
-        while (insertAfter) {
-            if (cmp(item, insertAfter->val) == 0) return;
-            insertAfter = cmp(item, insertAfter->val) == -1 ? insertAfter->left : insertAfter->right;
+        if (head == nullptr) {
+            head = new Node(node);
+            return;
         }
-        insertAfter = new Node(node);
+        Node* parent = head;
+        int compared;
+        bool finished = false;
+        while (!finished) {
+            compared = cmp(item, parent->val);
+            switch (compared) {
+            case -1:
+                finished = parent->left == nullptr;
+                if (!finished) parent = parent->left;
+                break;
+            case 1:
+                finished = parent->right == nullptr;
+                if (!finished) parent = parent->right;
+                break;
+            default:
+                return;  // 0 - повторяющееся значение
+            }
+        }
+        if (compared == -1) {
+            parent->left = new Node(node);
+        } else {
+            parent->right = new Node(node);
+        }
     }
 
     bool Search(T item) {
