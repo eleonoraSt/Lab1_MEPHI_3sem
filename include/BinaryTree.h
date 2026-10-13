@@ -42,6 +42,15 @@ private:
             }
         }
     }
+
+    Node* SearchNode(T item) {
+        Node* lookAt = head;
+        while (lookAt) {
+            if (cmp(item, lookAt->val) == 0) return lookAt;
+            lookAt = cmp(item, lookAt->val) == -1 ? lookAt->left : lookAt->right;
+        }
+        return nullptr;
+    }
 public:
     BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
 
@@ -81,12 +90,7 @@ public:
     }
 
     bool Search(T item) {
-        Node* lookAt = head;
-        while (lookAt) {
-            if (cmp(item, lookAt->val) == 0) return true;
-            lookAt = cmp(item, lookAt->val) == -1 ? lookAt->left : lookAt->right;
-        }
-        return false;
+        return SearchNode(item) != nullptr;
     }
 
     BinaryTree<T> Map(T (*func)(T), const char* order) {
