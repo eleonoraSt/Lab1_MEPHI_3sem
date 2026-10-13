@@ -1,6 +1,9 @@
 #ifndef BINARYTREE_H
 #define BINARYTREE_H
 
+#include <string>
+#include <sstream>
+
 template <class T>
 class BinaryTree {
 private:
@@ -104,6 +107,14 @@ public:
         auto calculate = [&](T val) {initial = func(initial, val);};
         Traverse(head, calculate, order);
         return initial;
+    }
+
+    std::string ToString(std::string (*toText)(T), const char* order) {
+        std::string text;
+        std::ostringstream textOut(text);
+        auto output = [&](T val) {textOut << toText(val);};
+        Traverse(head, textOut, order);
+        return text;
     }
 };
 
