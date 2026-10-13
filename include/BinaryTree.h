@@ -116,6 +116,16 @@ public:
         Traverse(head, textOut, order);
         return text;
     }
+
+    void FromString(std::string text, T (*fromText)(std::string)) {
+        std::istringstream textIn(text);
+        std::string buf;
+        T val;
+        while (textIn >> buf) {
+            val = fromText(buf);
+            Insert(val);
+        }
+    }
 };
 
 #endif // BINARYTREE_H
