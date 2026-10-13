@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sstream>
+#include <stdexcept>
 
 template <class T>
 class BinaryTree {
@@ -91,6 +92,15 @@ public:
 
     bool Search(T item) {
         return SearchNode(item) != nullptr;
+    }
+
+    BinaryTree<T> SubTree(T root) {
+        Node* rootNode = SearchNode(root);
+        if (rootNode == nullptr) throw std::invalid_argument("No root with given value");
+        BinaryTree<T> result = BinaryTree<T>(cmp);
+        auto append = [&](T val) {result.Insert(val);};
+        Traverse(rootNode, append, "LCR");  // обход неважен
+        return result;
     }
 
     BinaryTree<T> Map(T (*func)(T), const char* order) {
