@@ -44,13 +44,28 @@ private:
         }
     }
 
-    Node* SearchNode(T item) {
-        Node* lookAt = head;
+    Node* SearchNode(Node* lookAt, T item) {
         while (lookAt) {
             if (cmp(item, lookAt->val) == 0) return lookAt;
             lookAt = cmp(item, lookAt->val) == -1 ? lookAt->left : lookAt->right;
         }
         return nullptr;
+    }
+
+    bool IsContainsFromHead(Node* lookAt, Node* lookFor) {
+        bool contains = cmp(lookAt->val, lookFor->val) == 0;
+        if (!contains) return false;
+        if (lookFor->left != nullptr) {
+            if (lookAt->left == nullptr) return false;  // нужна левая ветвь, а её нет
+            contains = IsContainsFromHead(lookAt->left, lookFor->left);
+            if (!contains) return false;
+        }
+        if (lookFor->right != nullptr) {
+            if (lookAt->right == nullptr) return false;  // нужна левая ветвь, а её нет
+            contains = IsContainsFromHead(lookAt->right, lookFor->right);
+            if (!contains) return false;
+        }
+        return true;
     }
 public:
     BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
@@ -91,16 +106,22 @@ public:
     }
 
     bool Search(T item) {
-        return SearchNode(item) != nullptr;
+        return SearchNode(head, item) != nullptr;
     }
 
     BinaryTree<T> SubTree(T root) {
-        Node* rootNode = SearchNode(root);
+        Node* rootNode = SearchNode(head, root);
         if (rootNode == nullptr) throw std::invalid_argument("No root with given value");
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(val);};
         Traverse(rootNode, append, "LCR");  // обход неважен
         return result;
+    }
+
+    bool IsSubTree(BinaryTree<T>& subtree) {
+        Node* root = SearchNode(head, subtree.head->val);
+        if (root == nullptr) return false;  // вершина данного не входит сюда
+        return IsContainsFromHead(root, subtree.head);
     }
 
     BinaryTree<T> Map(T (*func)(T), const char* order) {
