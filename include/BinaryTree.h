@@ -115,6 +115,17 @@ private:
         }
         return heightLeft > heightRight ? ++heightLeft: ++heightRight;
     }
+
+    void ToStringPair(Node* lookAt, std::ostringstream* textOut, std::string (*toText)(T)) {
+        if (lookAt->left) {
+            *textOut << "{" + toText(lookAt->val) + ": " + toText(lookAt->left->val) << "}, ";
+            ToStringPair(lookAt->left, textOut, toText);
+        }
+        if (lookAt->right) {
+            *textOut << "{" + toText(lookAt->val) + ": " + toText(lookAt->right->val) << "}, ";
+            ToStringPair(lookAt->right, textOut, toText);
+        }
+    }
 public:
     BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
 
@@ -224,6 +235,15 @@ public:
         std::ostringstream textOut(text);
         auto output = [&](T val) {textOut << toText(val);};
         Traverse(head, textOut, order);
+        return text;
+    }
+
+    std::string ToStringInPairs(std::string (*toText)(T)) {
+        std::string text;
+        std::ostringstream textOut(text);
+        textOut << "[";
+        ToStringPair(head, &textOut, toText);
+        textOut << "]";
         return text;
     }
 
