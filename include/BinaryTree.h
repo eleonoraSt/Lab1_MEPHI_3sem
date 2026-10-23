@@ -117,8 +117,9 @@ private:
     }
 
     void ToStringPair(Node* lookAt, std::ostringstream* textOut, std::string (*toText)(T)) {
+        // Формат: "{parent : child}, "
         if (lookAt->left) {
-            *textOut << "{" + toText(lookAt->val) + ": " + toText(lookAt->left->val) << "}, ";
+            *textOut << "{" + toText(lookAt->val) + " : " + toText(lookAt->left->val) << "}, ";
             ToStringPair(lookAt->left, textOut, toText);
         }
         if (lookAt->right) {
@@ -241,9 +242,7 @@ public:
     std::string ToStringInPairs(std::string (*toText)(T)) {
         std::string text;
         std::ostringstream textOut(text);
-        textOut << "[";
         ToStringPair(head, &textOut, toText);
-        textOut << "]";
         return text;
     }
 
@@ -252,6 +251,32 @@ public:
         std::string buf;
         T val;
         while (textIn >> buf) {
+            val = fromText(buf);
+            Insert(val);
+        }
+    }
+
+    void FromStringInPairs(std::string text, T (*fromText)(std::string)) {
+        int length = text.size();
+        int bufLength;
+        std::istringstream textIn(text);
+        std::string buf;
+        T val;
+        while (!textIn.eof()) {
+            textIn.ignore(length, '{');
+            if (!(textIn >> buf)) return;  // строка кончилась
+            if (head == nullptr) {
+                val = fromText(buf);
+                Insert(val);
+            }
+            textIn >> buf;
+            if (buf != ":") throw std::invalid_argument("Incorrect string format");
+            if (!(textIn >> buf)) throw std::invalid_argument("Incorrect string format");
+            bufLength = buf.size();
+            if (buf[bufLength - 2] != '}' || buf[bufLength - 1] != ',') {
+                throw std::invalid_argument("Incorrect string format");
+            }
+            buf.erase(bufLength - 2, bufLength - 1);
             val = fromText(buf);
             Insert(val);
         }
