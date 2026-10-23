@@ -5,6 +5,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "OrderStr.h"
+
 template <class T>
 class BinaryTree {
 private:
@@ -12,10 +14,12 @@ private:
         T val;
         Node* left;
         Node* right;
+        Node* thread;
     };
 
     Node* head;
     int (*cmp)(T, T);
+    const char* threadOrder;
     /*
      * -1 - a < b
      * 0  - a = b
@@ -28,19 +32,45 @@ private:
         delete node;
     }
 
-    void Traverse(Node* node, void (*func)(T), const char* order) {
+    void TraverseNoThread(Node* node, void (*func)(T), const char* order) {
         for (int index = 0; index < 3; index++) {
             switch (order[index]) {
             case 'L':
-                if (node->left) Traverse(node->left, func, order);
+                if (node->left) TraverseNoThread(node->left, func, order);
                 break;
             case 'R':
-                if (node->right) Traverse(node->right, func, order);
+                if (node->right) TraverseNoThread(node->right, func, order);
                 break;
             default:
                 func(node->val);
                 break;
             }
+        }
+    }
+
+    void TraverseThread(void (*func)(T)) {
+        Node* node;
+        switch (threadOrder[0]) {
+        case 'L':
+            node = (ParentOfMostLeft(head))->left;
+        case 'R':
+            node = (ParentOfMostRight(head))->right;
+        default:
+            node = head;
+        }
+        func(node->val);
+        while (node->thread != nullptr) {
+            node = node->thread;
+            func(node->val);
+        }
+    }
+
+    void Traverse(void (*func)(T), const char* order) {
+        if (threadOrder == nullptr || order && !equal(threadOrder, order)) {
+            if (order == nullptr) throw std::invalid_argument("No traversal order given");
+            TraverseNoThread(head, func, order);
+        } else {
+            TraverseThread(func);
         }
     }
 
@@ -128,7 +158,9 @@ private:
         }
     }
 public:
-    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
+    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare), threadOrder(nullptr) {}
+
+    BinaryTree(int (*compare)(T, T), const char* order): head(nullptr), cmp(compare), threadOrder(order) {}
 
     ~BinaryTree() {
         if (head) DeleteNode(head);
@@ -174,7 +206,7 @@ public:
         if (rootNode == nullptr) throw std::invalid_argument("No root with given value");
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(val);};
-        Traverse(rootNode, append, "LCR");  // обход неважен
+        Traverse(append, "LCR");  // обход неважен
         return result;
     }
 
@@ -211,31 +243,31 @@ public:
         }
     }
 
-    BinaryTree<T> Map(T (*func)(T), const char* order) {
+    BinaryTree<T> Map(T (*func)(T), const char* order=nullptr) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(func(val));};
-        Traverse(head, append, order);
+        Traverse(append, order);
         return result;
     }
 
-    BinaryTree<T> Where(bool (*func)(T), const char* order) {
+    BinaryTree<T> Where(bool (*func)(T), const char* order=nullptr) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {if (func(val)) result.Insert(val);};
-        Traverse(head, append, order);
+        Traverse(append, order);
         return result;
     }
 
-    T Reduce(T (*func)(T, T), T initial, const char* order) {
+    T Reduce(T (*func)(T, T), T initial, const char* order=nullptr) {
         auto calculate = [&](T val) {initial = func(initial, val);};
-        Traverse(head, calculate, order);
+        Traverse(calculate, order);
         return initial;
     }
 
-    std::string ToString(std::string (*toText)(T), const char* order) {
+    std::string ToString(std::string (*toText)(T), const char* order=nullptr) {
         std::string text;
         std::ostringstream textOut(text);
         auto output = [&](T val) {textOut << toText(val);};
-        Traverse(head, textOut, order);
+        Traverse(textOut, order);
         return text;
     }
 
