@@ -5,8 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "OrderStr.h"
-
 template <class T>
 class BinaryTree {
 private:
@@ -19,7 +17,6 @@ private:
 
     Node* head;
     int (*cmp)(T, T);
-    const char* threadOrder;
     /*
      * -1 - a < b
      * 0  - a = b
@@ -32,14 +29,14 @@ private:
         delete node;
     }
 
-    void TraverseNoThread(Node* node, void (*func)(T), const char* order) {
+    void Traverse(Node* node, void (*func)(T), const char* order) {
         for (int index = 0; index < 3; index++) {
             switch (order[index]) {
             case 'L':
-                if (node->left) TraverseNoThread(node->left, func, order);
+                if (node->left) Traverse(node->left, func, order);
                 break;
             case 'R':
-                if (node->right) TraverseNoThread(node->right, func, order);
+                if (node->right) Traverse(node->right, func, order);
                 break;
             default:
                 func(node->val);
@@ -48,51 +45,28 @@ private:
         }
     }
 
-    void TraverseThread(void (*func)(T)) {
-        Node* node;
-        switch (threadOrder[0]) {
-        case 'L':
-            node = (ParentOfMostLeft(head))->left;
-        case 'R':
-            node = (ParentOfMostRight(head))->right;
-        default:
-            node = head;
-        }
-        func(node->val);
-        while (node->thread != nullptr) {
-            node = node->thread;
-            func(node->val);
-        }
-    }
-
-    void Traverse(void (*func)(T), const char* order) {
-        if (threadOrder == nullptr || order && !equal(threadOrder, order)) {
-            if (order == nullptr) throw std::invalid_argument("No traversal order given");
-            TraverseNoThread(head, func, order);
-        } else {
-            TraverseThread(func);
-        }
-    }
-
     Node* SearchNode(Node* lookAt, T item) {
+        int compared;
         while (lookAt) {
-            if (cmp(item, lookAt->val) == 0) return lookAt;
-            lookAt = cmp(item, lookAt->val) == -1 ? lookAt->left : lookAt->right;
+            compared = cmp(item, lookAt->val);
+            if (compared) return lookAt;
+            lookAt = compared == -1 ? lookAt->left : lookAt->right;
         }
         return nullptr;
     }
 
-    bool IsContainsFromHead(Node* lookAt, Node* lookFor) {
+    bool IsSubTreeFromHead(Node* lookAt, Node* lookFor) {
+        // Проверяет совпадение поддерева этого дерева с данным
         bool contains = cmp(lookAt->val, lookFor->val) == 0;
         if (!contains) return false;
         if (lookFor->left != nullptr) {
             if (lookAt->left == nullptr) return false;  // нужна левая ветвь, а её нет
-            contains = IsContainsFromHead(lookAt->left, lookFor->left);
+            contains = IsSubTreeFromHead(lookAt->left, lookFor->left);
             if (!contains) return false;
         }
         if (lookFor->right != nullptr) {
             if (lookAt->right == nullptr) return false;  // нужна правая ветвь, а её нет
-            contains = IsContainsFromHead(lookAt->right, lookFor->right);
+            contains = IsSubTreeFromHead(lookAt->right, lookFor->right);
             if (!contains) return false;
         }
         return true;
@@ -158,9 +132,7 @@ private:
         }
     }
 public:
-    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare), threadOrder(nullptr) {}
-
-    BinaryTree(int (*compare)(T, T), const char* order): head(nullptr), cmp(compare), threadOrder(order) {}
+    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
 
     ~BinaryTree() {
         if (head) DeleteNode(head);
@@ -213,7 +185,7 @@ public:
     bool IsSubTree(BinaryTree<T>& subtree) {
         Node* root = SearchNode(head, subtree.head->val);
         if (root == nullptr) return false;  // вершина данного не входит сюда
-        return IsContainsFromHead(root, subtree.head);
+        return IsSubTreeFromHead(root, subtree.head);
     }
 
     void Balance() {
