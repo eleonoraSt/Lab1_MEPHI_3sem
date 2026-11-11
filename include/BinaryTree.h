@@ -26,12 +26,12 @@ private:
     UnqPtr<Node>& SearchNode(T item, UnqPtr<Node>& root) {
         UnqPtr<Node>* address = &root;
         int compared;
-        while (!(*address)->isNull()) {
+        while (!(address->isNull())) {
             compared = cmp(item, (*address)->val);
             if (compared == 0) return *address;
-            address = compared == -1 ? (*address)->left : (*address)->right;
+            address = compared == -1 ? &((*address)->left) : &((*address)->right);
         }
-        return UnqPtr<Node>();
+        return UnqPtr<Node>();  // не нашлось
     }
 
     void Traverse(UnqPtr<Node>& node, void (*func)(T), const char* order) {
@@ -90,32 +90,32 @@ public:
             head = make_unq({item, nullptr, nullptr});
             return;
         }
-        UnqPtr<Node>& parent = head;
+        UnqPtr<Node>* parent = &head;
         bool finished = false;
         int compared;
         while (finished) {
-            compared = cmp(item, parent->val);
+            compared = cmp(item, (*parent)->val);
             if (compared == 0) return;  // повторяющееся значение
             if (compared == -1) {
-                finished = parent->left.isNull();
+                finished = (*parent)->left.isNull();
                 if (finished) {
-                    parent->left = make_unq({item, nullptr, nullptr});
+                    (*parent)->left = make_unq({item, nullptr, nullptr});
                 } else {
-                    parent = parent->left;
+                    parent = &((*parent)->left);
                 }
             } else {
                 finished = parent->right.isNull();
                 if (finished) {
-                    parent->right = make_unq({item, nullptr, nullptr});
+                    (*parent)->right = make_unq({item, nullptr, nullptr});
                 } else {
-                    parent = parent->right;
+                    parent = &((*parent)->right);
                 }
             }
         }
     }
 
     bool Search(T item) {
-        return SearchNode(head, item) != nullptr;
+        return !(SearchNode(head, item).isNull());
     }
 
     BinaryTree<T> Map(T (*func)(T), const char* order) {
