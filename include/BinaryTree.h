@@ -4,18 +4,18 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include "UnqPtr.h"
 
 template <class T>
 class BinaryTree {
 private:
     struct Node {
         T val;
-        Node* left;
-        Node* right;
-        Node* thread;
+        UnqPtr<Node> left;
+        UnqPtr<Node> right;
     };
 
-    Node* head;
+    UnqPtr<Node> head;
     int (*cmp)(T, T);
     /*
      * -1 - a < b
@@ -23,13 +23,18 @@ private:
      * 1  - a > b
      */
 
-    void DeleteNode(Node* node) {
-        if (node->left) DeleteNode(node->left);
-        if (node->right) DeleteNode(node->right);
-        delete node;
+    UnqPtr<Node>& SearchNode(T item, UnqPtr<Node>& root) {
+        UnqPtr<Node>* address = &root;
+        int compared;
+        while (!(*address)->isNull()) {
+            compared = cmp(item, (*address)->val);
+            if (compared == 0) return *address;
+            address = compared == -1 ? (*address)->left : (*address)->right;
+        }
+        return UnqPtr<Node>();
     }
 
-    void Traverse(Node* node, void (*func)(T), const char* order) {
+    void Traverse(UnqPtr<Node>& node, void (*func)(T), const char* order) {
         for (int index = 0; index < 3; index++) {
             switch (order[index]) {
             case 'L':
@@ -45,127 +50,67 @@ private:
         }
     }
 
-    Node* SearchNode(Node* lookAt, T item) {
-        int compared;
-        while (lookAt) {
-            compared = cmp(item, lookAt->val);
-            if (compared) return lookAt;
-            lookAt = compared == -1 ? lookAt->left : lookAt->right;
+    void ToStringPair(UnqPtr<Node>& node, std::ostringstream& textOut, std::string (*toText)(T)) {
+        // Формат: "{parent : child}, "
+        if (node->left) {
+            textOut << "{" + toText(node->val) + " : " + toText(node->left->val) << "}, ";
+            ToStringPair(node->left, textOut, toText);
         }
-        return nullptr;
+        if (node->right) {
+            textOut << "{" + toText(node->val) + ": " + toText(node->right->val) << "}, ";
+            ToStringPair(node->right, textOut, toText);
+        }
     }
 
-    bool IsSubTreeFromHead(Node* lookAt, Node* lookFor) {
-        // Проверяет совпадение поддерева этого дерева с данным
-        bool contains = cmp(lookAt->val, lookFor->val) == 0;
-        if (!contains) return false;
-        if (lookFor->left != nullptr) {
-            if (lookAt->left == nullptr) return false;  // нужна левая ветвь, а её нет
-            contains = IsSubTreeFromHead(lookAt->left, lookFor->left);
-            if (!contains) return false;
+    bool IsSubTreeNode(UnqPtr<Node>& node, UnqPtr<Node>& lookFor) {
+        if (cmp(node->val, lookFor->val != 0)) return false;  // вершины не совпали
+        if (lookFor->left.isNull()) {
+            if (!(node->left.isNull())) return false;
+        } else {
+            if (node->left.isNull()) return false;
+            if (!IsSubTreeNode(node->left, lookFor->left)) return false;
         }
-        if (lookFor->right != nullptr) {
-            if (lookAt->right == nullptr) return false;  // нужна правая ветвь, а её нет
-            contains = IsSubTreeFromHead(lookAt->right, lookFor->right);
-            if (!contains) return false;
+        if (lookFor->right.isNull()) {
+            if (!(node->right.isNull())) return false;
+        } else {
+            if (node->right.isNull()) return false;
+            if (!IsSubTreeNode(node->right, lookFor->right)) return false;
         }
         return true;
     }
-
-    Node* ParentOfMostLeft(Node* lookAt) {  // нужно в алгоритме балансировки
-        if (lookAt->left == nullptr) throw std::invalid_argument("Given node is a leaf");
-        while (lookAt->left->left != nullptr) lookAt = lookAt->left;
-        return lookAt;
-    }
-
-    Node* ParentOfMostRight(Node* lookAt) {  // нужно в алгоритме балансировки
-        if (lookAt->right == nullptr) throw std::invalid_argument("Given node is a leaf");
-        while (lookAt->right->right != nullptr) lookAt = lookAt->right;
-        return lookAt;
-    }
-
-    int BalanceNode(Node* parent, Node* lookAt) {  // возвращает высоту ветки
-        int heightLeft = lookAt->left == nullptr ? 0 : BalanceNode(lookAt, lookAt->left);
-        int heightRight = lookAt->right == nullptr ? 0 : BalanceNode(lookAt, lookAt->right);
-        while (heightLeft - heightRight > 1) {
-            Node* parentOfNewRoot = ParentOfMostRight(lookAt->left);
-            Node* buf = lookAt->left;
-            lookAt->left = parentOfNewRoot->right->left;
-            parentOfNewRoot->right->left = buf;
-            parentOfNewRoot->right->right = lookAt;
-            if (parent->left == lookAt) {
-                parent->left = parentOfNewRoot->right;
-            } else {
-                parent->right = parentOfNewRoot->right;
-            }
-            parentOfNewRoot->right = nullptr;
-            heightLeft--;
-            heightRight++;
-        }
-        while (heightRight - heightLeft > 1) {
-            Node* parentOfNewRoot = ParentOfMostLeft(lookAt->right);
-            Node* buf = lookAt->right;
-            lookAt->right = parentOfNewRoot->left->right;
-            parentOfNewRoot->left->right = buf;
-            parentOfNewRoot->left->left = lookAt;
-            if (parent->left == lookAt) {
-                parent->left = parentOfNewRoot->left;
-            } else {
-                parent->right = parentOfNewRoot->left;
-            }
-            parentOfNewRoot->left = nullptr;
-            heightRight--;
-            heightLeft++;
-        }
-        return heightLeft > heightRight ? ++heightLeft: ++heightRight;
-    }
-
-    void ToStringPair(Node* lookAt, std::ostringstream* textOut, std::string (*toText)(T)) {
-        // Формат: "{parent : child}, "
-        if (lookAt->left) {
-            *textOut << "{" + toText(lookAt->val) + " : " + toText(lookAt->left->val) << "}, ";
-            ToStringPair(lookAt->left, textOut, toText);
-        }
-        if (lookAt->right) {
-            *textOut << "{" + toText(lookAt->val) + ": " + toText(lookAt->right->val) << "}, ";
-            ToStringPair(lookAt->right, textOut, toText);
-        }
-    }
 public:
-    BinaryTree(int (*compare)(T, T)): head(nullptr), cmp(compare) {}
+    BinaryTree(int (*compare)(T, T)): head(UnqPtr<Node>()), cmp(compare) {}
 
     ~BinaryTree() {
-        if (head) DeleteNode(head);
+        head = UnqPtr<Node>();
     }
 
     void Insert(T item) {
-        Node node = {item, nullptr, nullptr};
-        if (head == nullptr) {
-            head = new Node(node);
+        if (head.isNull()) {
+            head = make_unq({item, nullptr, nullptr});
             return;
         }
-        Node* parent = head;
-        int compared;
+        UnqPtr<Node>& parent = head;
         bool finished = false;
-        while (!finished) {
+        int compared;
+        while (finished) {
             compared = cmp(item, parent->val);
-            switch (compared) {
-            case -1:
-                finished = parent->left == nullptr;
-                if (!finished) parent = parent->left;
-                break;
-            case 1:
-                finished = parent->right == nullptr;
-                if (!finished) parent = parent->right;
-                break;
-            default:
-                return;  // 0 - повторяющееся значение
+            if (compared == 0) return;  // повторяющееся значение
+            if (compared == -1) {
+                finished = parent->left.isNull();
+                if (finished) {
+                    parent->left = make_unq({item, nullptr, nullptr});
+                } else {
+                    parent = parent->left;
+                }
+            } else {
+                finished = parent->right.isNull();
+                if (finished) {
+                    parent->right = make_unq({item, nullptr, nullptr});
+                } else {
+                    parent = parent->right;
+                }
             }
-        }
-        if (compared == -1) {
-            parent->left = new Node(node);
-        } else {
-            parent->right = new Node(node);
         }
     }
 
@@ -173,80 +118,38 @@ public:
         return SearchNode(head, item) != nullptr;
     }
 
-    BinaryTree<T> SubTree(T root) {
-        Node* rootNode = SearchNode(head, root);
-        if (rootNode == nullptr) throw std::invalid_argument("No root with given value");
-        BinaryTree<T> result = BinaryTree<T>(cmp);
-        auto append = [&](T val) {result.Insert(val);};
-        Traverse(append, "LCR");  // обход неважен
-        return result;
-    }
-
-    bool IsSubTree(BinaryTree<T>& subtree) {
-        Node* root = SearchNode(head, subtree.head->val);
-        if (root == nullptr) return false;  // вершина данного не входит сюда
-        return IsSubTreeFromHead(root, subtree.head);
-    }
-
-    void Balance() {
-        int heightLeft = head->left == nullptr ? 0 : BalanceNode(head, head->left);
-        int heightRight = head->right == nullptr ? 0 : BalanceNode(head, head->right);
-        while (heightLeft - heightRight > 1) {
-            Node* parentOfNewRoot = ParentOfMostRight(head->left);
-            Node* buf = head->left;
-            head->left = parentOfNewRoot->right->left;
-            parentOfNewRoot->right->left = buf;
-            parentOfNewRoot->right->right = head;
-            head = parentOfNewRoot->right;
-            parentOfNewRoot->right = nullptr;
-            heightLeft--;
-            heightRight++;
-        }
-        while (heightRight - heightLeft > 1) {
-            Node* parentOfNewRoot = ParentOfMostLeft(head->right);
-            Node* buf = head->right;
-            head->right = parentOfNewRoot->left->right;
-            parentOfNewRoot->left->right = buf;
-            parentOfNewRoot->left->left = head;
-            head = parentOfNewRoot->left;
-            parentOfNewRoot->left = nullptr;
-            heightRight--;
-            heightLeft++;
-        }
-    }
-
-    BinaryTree<T> Map(T (*func)(T), const char* order=nullptr) {
+    BinaryTree<T> Map(T (*func)(T), const char* order) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(func(val));};
-        Traverse(append, order);
+        Traverse(head, append, order);
         return result;
     }
 
-    BinaryTree<T> Where(bool (*func)(T), const char* order=nullptr) {
+    BinaryTree<T> Where(bool (*func)(T), const char* order) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {if (func(val)) result.Insert(val);};
-        Traverse(append, order);
+        Traverse(head, append, order);
         return result;
     }
 
-    T Reduce(T (*func)(T, T), T initial, const char* order=nullptr) {
+    T Reduce(T (*func)(T, T), T initial, const char* order) {
         auto calculate = [&](T val) {initial = func(initial, val);};
         Traverse(calculate, order);
         return initial;
     }
 
-    std::string ToString(std::string (*toText)(T), const char* order=nullptr) {
+    std::string ToString(std::string (*toText)(T), const char* order) {
         std::string text;
         std::ostringstream textOut(text);
         auto output = [&](T val) {textOut << toText(val);};
-        Traverse(textOut, order);
+        Traverse(head, output, order);
         return text;
     }
 
     std::string ToStringInPairs(std::string (*toText)(T)) {
         std::string text;
         std::ostringstream textOut(text);
-        ToStringPair(head, &textOut, toText);
+        ToStringPair(head, textOut, toText);
         return text;
     }
 
@@ -269,14 +172,15 @@ public:
         while (!textIn.eof()) {
             textIn.ignore(length, '{');
             if (!(textIn >> buf)) return;  // строка кончилась
-            if (head == nullptr) {
+            if (head.isNull()) {
                 val = fromText(buf);
                 Insert(val);
             }
             textIn >> buf;
             if (buf != ":") throw std::invalid_argument("Incorrect string format");
-            if (!(textIn >> buf)) throw std::invalid_argument("Incorrect string format");
+            if (!(textIn >> buf)) throw std::invalid_argument("Incorrect string format");  // нет ребёнка в паре
             bufLength = buf.size();
+            if (bufLength < 3) throw std::invalid_argument("Incorrect string format");  // нет },
             if (buf[bufLength - 2] != '}' || buf[bufLength - 1] != ',') {
                 throw std::invalid_argument("Incorrect string format");
             }
@@ -284,6 +188,21 @@ public:
             val = fromText(buf);
             Insert(val);
         }
+    }
+
+    BinaryTree<T> SubTree(T root) {
+        UnqPtr<Node>& rootNode = SearchNode(root, head);
+        if (rootNode.isNull()) throw std::invalid_argument("No root with given value");
+        BinaryTree<T> result = BinaryTree<T>(cmp);
+        auto append = [&](T val) {result.Insert(val);};
+        Traverse(append, "LCR");  // обход неважен
+        return result;
+    }
+
+    bool IsSubTree(BinaryTree<T>& subtree) {
+        UnqPtr<Node>& rootNode = SearchNode(subtree.head->val, head);
+        if (rootNode.isNull()) return false;
+        return IsSubTreeNode(rootNode, subtree.head);
     }
 };
 

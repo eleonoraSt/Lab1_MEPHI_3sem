@@ -7,10 +7,10 @@ qt_standard_project_setup()
 
 qt_add_executable(Lab1_3sem
     WIN32 MACOSX_BUNDLE
-    include/BinaryTree.h
     main.cpp
-    src/OrderStr.cpp
-    include/OrderStr.h
+    include/BinaryTree.h
+    include/UnqPtr.h
+
 )
 
 target_link_libraries(Lab1_3sem
