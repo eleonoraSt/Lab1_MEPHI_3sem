@@ -34,6 +34,27 @@ private:
         return UnqPtr<Node>();  // не нашлось
     }
 
+    UnqPtr<Node>& MostLeftRightOf(UnqPtr<Node>& after) {
+        // самый левый из правого ребёнка и его потомков
+        if (after->right.isNull()) throw std::invalid_argument("No right child");
+        UnqPtr<Node>* address = &(after->right);
+        while (!((*address)->left.isNull())) {
+            address = &((*address)->left);
+        }
+        return *address;
+    }
+
+    UnqPtr<Node>& ParentOfMostLeftRightOf(UnqPtr<Node>& after) {  // нужно при удалении
+        // родитель самого левого из правого ребёнка и его потомков
+        if (after->right.isNull()) throw std::invalid_argument("No right child");
+        if (after->right->left.isNull()) return after;
+        UnqPtr<Node>* address = &(after->right);
+        while (!((*address)->left->left.isNull())) {  // у левого ребёнка есть левый ребёнок
+            address = &((*address)->left);
+        }
+        return *address;
+    }
+
     void Traverse(UnqPtr<Node>& node, void (*func)(T), const char* order) {
         for (int index = 0; index < 3; index++) {
             switch (order[index]) {
@@ -115,7 +136,24 @@ public:
     }
 
     bool Search(T item) {
-        return !(SearchNode(head, item).isNull());
+        return !(SearchNode(item, head).isNull());
+    }
+
+    void Delete(T item) {
+        UnqPtr<Node>& node = SearchNode(item, head);
+        if (node.isNull()) return;  // значения нет
+        if (node->right.isNull()) {
+            node = node->left;
+        } else {
+            UnqPtr<Node>& parentOfNewRoot = ParentOfMostLeftRightOf(node);
+            if (cmp(parentOfNewRoot->val, node->val) == 0) {  // это и есть node
+                node->val = node->right->val;
+                node->right = node->right->right;
+            } else {
+                node->val = parentOfNewRoot->left->val;
+                parentOfNewRoot->left = parentOfNewRoot->left->right;
+            }
+        }
     }
 
     BinaryTree<T> Map(T (*func)(T), const char* order) {
