@@ -10,7 +10,6 @@ qt_add_executable(Lab1_3sem
     main.cpp
     include/BinaryTree.h
     include/UnqPtr.h
-
 )
 
 target_link_libraries(Lab1_3sem
