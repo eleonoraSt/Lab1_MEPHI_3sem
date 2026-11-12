@@ -21,7 +21,12 @@ public:
 
     bool IsSubsetOf(ISet<T>* set) {
         auto isElement = [&](bool initial, T item) {return initial && set->HasElement(item);};
-        return tree.Reduce(isElement, true, "LCR");  // обход
+        return tree.Reduce(isElement, true, "LCR");  // обход неважен
+    }
+
+    bool operator==(ISet<T>& set) {
+        if (GetCount() != set.GetCount()) return false;
+        return IsSubsetOf(&set);
     }
 };
 

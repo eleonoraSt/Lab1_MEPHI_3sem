@@ -13,7 +13,7 @@ public:
     virtual ISet<T>* Intersect(ISet<T>* set) = 0;
     virtual ISet<T>* Difference(ISet<T>* set) = 0;
 
-    virtual bool operator==(ISet<T>* set) = 0;
+    virtual bool operator==(ISet<T>& set) = 0;
 };
 
 template <class T>
