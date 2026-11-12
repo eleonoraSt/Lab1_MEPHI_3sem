@@ -7,7 +7,7 @@ public:
     virtual int GetCount() = 0;
     virtual bool IsEmpty();
     virtual bool HasElement(T element) = 0;
-    virtual bool Contains(ISet<T>* set) = 0;
+    virtual bool IsSubsetOf(ISet<T>* set) = 0;
 
     virtual ISet<T>* Union(ISet<T>* set) = 0;
     virtual ISet<T>* Intersect(ISet<T>* set) = 0;

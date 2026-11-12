@@ -11,6 +11,7 @@ qt_add_executable(Lab1_3sem
     include/BinaryTree.h
     include/UnqPtr.h
     include/ISet.h
+    include/MutableSet.h
 )
 
 target_link_libraries(Lab1_3sem

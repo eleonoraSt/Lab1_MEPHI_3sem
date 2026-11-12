@@ -34,16 +34,6 @@ private:
         return UnqPtr<Node>();  // не нашлось
     }
 
-    UnqPtr<Node>& MostLeftRightOf(UnqPtr<Node>& after) {
-        // самый левый из правого ребёнка и его потомков
-        if (after->right.isNull()) throw std::invalid_argument("No right child");
-        UnqPtr<Node>* address = &(after->right);
-        while (!((*address)->left.isNull())) {
-            address = &((*address)->left);
-        }
-        return *address;
-    }
-
     UnqPtr<Node>& ParentOfMostLeftRightOf(UnqPtr<Node>& after) {  // нужно при удалении
         // родитель самого левого из правого ребёнка и его потомков
         if (after->right.isNull()) throw std::invalid_argument("No right child");
@@ -53,6 +43,12 @@ private:
             address = &((*address)->left);
         }
         return *address;
+    }
+
+    int CountAfter(UnqPtr<Node>& node) {
+        int left = node->left.isNull() ? 0 : CountAfter(node->left);
+        int right = node->right.isNull() ? 0 : CountAfter(node->right);
+        return left + right + 1;
     }
 
     void Traverse(UnqPtr<Node>& node, void (*func)(T), const char* order) {
@@ -156,8 +152,20 @@ public:
         }
     }
 
+    int GetCount() {
+        return head.isNull() ? 0 : CountAfter(head);
+    }
+
     BinaryTree<T> Map(T (*func)(T), const char* order) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
+        auto append = [&](T val) {result.Insert(func(val));};
+        Traverse(head, append, order);
+        return result;
+    }
+
+    template <class U>
+    BinaryTree<U> Map(U (*func)(T), int (*cmpU(U, U)), const char* order) {
+        BinaryTree<U> result = BinaryTree<T>(cmpU);
         auto append = [&](T val) {result.Insert(func(val));};
         Traverse(head, append, order);
         return result;
@@ -170,7 +178,8 @@ public:
         return result;
     }
 
-    T Reduce(T (*func)(T, T), T initial, const char* order) {
+    template <class U>
+    U Reduce(U (*func)(U, T), U initial, const char* order) {
         auto calculate = [&](T val) {initial = func(initial, val);};
         Traverse(calculate, order);
         return initial;
