@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include "UnqPtr.h"
 
+#define ARBITRARY_ORDER "LCR"  // для случаев, когда обход неважен
+
 template <class T>
 class BinaryTree {
 private:
@@ -100,7 +102,7 @@ public:
 
     BinaryTree(BinaryTree<T>& tree): cmp(tree.cmp) {
         auto add = [&](T item) {Insert(item);};
-        tree.Traverse(tree.head, add, "LCR");  // обход неважен
+        tree.Traverse(tree.head, add, ARBITRARY_ORDER);
     }
 
     ~BinaryTree() {
@@ -247,7 +249,7 @@ public:
         if (rootNode.isNull()) throw std::invalid_argument("No root with given value");
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(val);};
-        Traverse(append, "LCR");  // обход неважен
+        Traverse(append, ARBITRARY_ORDER);
         return result;
     }
 

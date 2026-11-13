@@ -23,23 +23,23 @@ public:
 
     bool IsSubsetOf(ISet<T>* set) {
         auto isElement = [&](bool initial, T item) {return initial && set->HasElement(item);};
-        return tree.Reduce(isElement, true, "LCR");  // обход неважен
+        return tree.Reduce(isElement, true, ARBITRARY_ORDER);
     }
 
     ISet<T>* Map(T (*func)(T)) {
         MutableSet<T>* mapped = new MutableSet<T>();
-        mapped->tree = tree.Map(func, "LCR");  // обход неважен
+        mapped->tree = tree.Map(func, ARBITRARY_ORDER);
         return mapped;
     }
 
     ISet<T>* Where(bool (*func)(T)) {
         MutableSet<T>* sorted = new MutableSet<T>();
-        sorted->tree = tree.Where(func, "LCR");  // обход неважен
+        sorted->tree = tree.Where(func, ARBITRARY_ORDER);
         return sorted;
     }
 
     T Reduce(T (*func)(T, T), T initial) {
-        return tree.Reduce(func, initial, "LCR");  // обход неважен
+        return tree.Reduce(func, initial, ARBITRARY_ORDER);
     }
 
     bool operator==(ISet<T>& set) {
