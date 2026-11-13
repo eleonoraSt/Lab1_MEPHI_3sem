@@ -96,7 +96,12 @@ private:
         return true;
     }
 public:
-    BinaryTree(int (*compare)(T, T)): head(UnqPtr<Node>()), cmp(compare) {}
+    BinaryTree(int (*cmp)(T, T)): head(UnqPtr<Node>()), cmp(cmp) {}
+
+    BinaryTree(BinaryTree<T>& tree): cmp(tree.cmp) {
+        auto add = [&](T item) {Insert(item);};
+        tree.Traverse(tree.head, add, "LCR");  // обход неважен
+    }
 
     ~BinaryTree() {
         head = UnqPtr<Node>();

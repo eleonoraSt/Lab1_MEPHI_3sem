@@ -11,6 +11,8 @@ private:
 public:
     MutableSet(): tree(BinaryTree<T>()) {}
 
+    MutableSet(MutableSet<T>& set): tree(set.tree) {}
+
     int GetCount() {
         return tree.GetCount();
     }

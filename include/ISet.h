@@ -13,6 +13,10 @@ public:
     virtual ISet<T>* Intersect(ISet<T>* set) = 0;
     virtual ISet<T>* Difference(ISet<T>* set) = 0;
 
+    virtual ISet<T>* Map(T (*func)(T)) = 0;
+    virtual ISet<T>* Where(bool (*func)(T)) = 0;
+    virtual T Reduce(T (*func)(T, T), T initial) = 0;
+
     virtual bool operator==(ISet<T>& set) = 0;
 };
 
