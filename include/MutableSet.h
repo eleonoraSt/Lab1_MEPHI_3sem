@@ -26,6 +26,22 @@ public:
         return tree.Reduce(isElement, true, "LCR");  // обход неважен
     }
 
+    ISet<T>* Map(T (*func)(T)) {
+        MutableSet<T>* mapped = new MutableSet<T>();
+        mapped->tree = tree.Map(func, "LCR");  // обход неважен
+        return mapped;
+    }
+
+    ISet<T>* Where(bool (*func)(T)) {
+        MutableSet<T>* sorted = new MutableSet<T>();
+        sorted->tree = tree.Where(func, "LCR");  // обход неважен
+        return sorted;
+    }
+
+    T Reduce(T (*func)(T, T), T initial) {
+        return tree.Reduce(func, initial, "LCR");  // обход неважен
+    }
+
     bool operator==(ISet<T>& set) {
         if (GetCount() != set.GetCount()) return false;
         return IsSubsetOf(&set);
