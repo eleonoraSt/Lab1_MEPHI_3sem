@@ -18,6 +18,14 @@ private:
 public:
     UnqPtr(): ptr(nullptr), isArray(false) {}
 
+    UnqPtr(T* pointer, bool isItArray=false): ptr(pointer), isArray(isItArray) {}
+
+    template <class Derived>
+    UnqPtr(Derived* pointer, bool isItArray=false): isArray(isItArray) {
+        static_assert(std::is_base_of<T, Derived>::value, "Argument must be of the target class or derived from it");
+        ptr = static_cast<T*>(pointer);
+    }
+
     UnqPtr(const UnqPtr<T>& other) = delete;
 
     UnqPtr(UnqPtr<T>&& other): ptr(other.ptr), isArray(other.isArray) {
@@ -33,6 +41,22 @@ public:
     }
 
     ~UnqPtr() {clear();}
+
+    UnqPtr<T>& operator=(T* pointer) {
+        clear();
+        ptr = pointer;
+        isArray = false;
+        return *this;  // конструктора по lvalue-ссылке нет
+    }
+
+    template <class Derived>
+    UnqPtr<T>& operator=(Derived* pointer) {
+        static_assert(std::is_base_of<T, Derived>::value, "Argument must be of the target class or derived from it");
+        clear();
+        ptr = static_cast<T*>(pointer);
+        isArray = false;
+        return *this;  // конструктора по lvalue-ссылке нет
+    }
 
     UnqPtr<T>& operator=(const UnqPtr<T>& other) = delete;
 
@@ -74,9 +98,7 @@ public:
         return ptr[index];
     }
 
-    bool isNull() {
-        return ptr == nullptr;
-    }
+    bool isNull() {return ptr == nullptr;}
 };
 
 template <class T, class... Args>

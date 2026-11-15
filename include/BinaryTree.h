@@ -111,7 +111,7 @@ public:
 
     void Insert(T item) {
         if (head.isNull()) {
-            head = make_unq({item, nullptr, nullptr});
+            head = make_unq({item, UnqPtr<T>(), UnqPtr<T>()});
             return;
         }
         UnqPtr<Node>* parent = &head;
@@ -123,14 +123,14 @@ public:
             if (compared == -1) {
                 finished = (*parent)->left.isNull();
                 if (finished) {
-                    (*parent)->left = make_unq({item, nullptr, nullptr});
+                    (*parent)->left = make_unq({item, UnqPtr<T>(), UnqPtr<T>()});
                 } else {
                     parent = &((*parent)->left);
                 }
             } else {
                 finished = parent->right.isNull();
                 if (finished) {
-                    (*parent)->right = make_unq({item, nullptr, nullptr});
+                    (*parent)->right = make_unq({item, UnqPtr<T>(), UnqPtr<T>()});
                 } else {
                     parent = &((*parent)->right);
                 }
