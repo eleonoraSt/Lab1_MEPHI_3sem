@@ -1,22 +1,23 @@
 #ifndef MUTABLESET_H
 #define MUTABLESET_H
 
-#include <utility>  // move
 #include "BinaryTree.h"
 #include "ISet.h"
 
 template <class T>
 class MutableSet: public ISet<T> {
 private:
-    //BinaryTree<T> tree;
     UnqPtr<BinaryTree<T>> tree;
 public:
     MutableSet(): tree(make_unq(BinaryTree<T>())) {}
 
     MutableSet(MutableSet<T>& set): tree(make_unq(BinaryTree<T>(*set.tree))) {}
 
+    MutableSet(MutableSet<T>&& set): tree(std::move(set.tree)) {}
+
     int GetCount() {
-        return tree->GetCount();
+        auto count = [&](int num, T item) {return ++num;};
+        return tree->Reduce(count, 0, ARBITRARY_ORDER);
     }
 
     bool HasElement(T element) {
@@ -67,6 +68,15 @@ public:
 
     T Reduce(T (*func)(T, T), T initial) {
         return tree->Reduce(func, initial, ARBITRARY_ORDER);
+    }
+
+    MutableSet<T> operator=(MutableSet<T>& set) {
+        auto identical = [&](T val) {return val;};
+        tree = set.tree->Map(identical, ARBITRARY_ORDER);
+    }
+
+    MutableSet<T> operator=(MutableSet<T>&& set) {
+        tree = std::move(set.tree);
     }
 
     bool operator==(ISet<T>& set) {

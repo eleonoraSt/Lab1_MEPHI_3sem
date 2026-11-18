@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <utility>  // move
 #include "UnqPtr.h"
 
 #define ARBITRARY_ORDER "LCR"  // для случаев, когда обход неважен
@@ -101,9 +102,11 @@ public:
     BinaryTree(int (*cmp)(T, T)): head(UnqPtr<Node>()), cmp(cmp) {}
 
     BinaryTree(BinaryTree<T>& tree): cmp(tree.cmp) {
-        auto add = [&](T item) {Insert(item);};
-        tree.Traverse(tree.head, add, ARBITRARY_ORDER);
+        auto append = [&](T item) {Insert(item);};
+        tree.Traverse(tree.head, append, ARBITRARY_ORDER);
     }
+
+    BinaryTree(BinaryTree<T>&& tree): head(std::move(tree.head)), cmp(tree.cmp) {}
 
     ~BinaryTree() {
         head = UnqPtr<Node>();
@@ -159,10 +162,6 @@ public:
         }
     }
 
-    int GetCount() {
-        return head.isNull() ? 0 : CountAfter(head);
-    }
-
     BinaryTree<T> Map(T (*func)(T), const char* order) {
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(func(val));};
@@ -188,7 +187,7 @@ public:
     template <class U>
     U Reduce(U (*func)(U, T), U initial, const char* order) {
         auto calculate = [&](T val) {initial = func(initial, val);};
-        Traverse(calculate, order);
+        Traverse(head, calculate, order);
         return initial;
     }
 
@@ -249,7 +248,7 @@ public:
         if (rootNode.isNull()) throw std::invalid_argument("No root with given value");
         BinaryTree<T> result = BinaryTree<T>(cmp);
         auto append = [&](T val) {result.Insert(val);};
-        Traverse(append, ARBITRARY_ORDER);
+        Traverse(head, append, ARBITRARY_ORDER);
         return result;
     }
 
@@ -257,6 +256,20 @@ public:
         UnqPtr<Node>& rootNode = SearchNode(subtree.head->val, head);
         if (rootNode.isNull()) return false;
         return IsSubTreeNode(rootNode, subtree.head);
+    }
+
+    BinaryTree<T> operator=(BinaryTree<T>& tree) {
+        head = UnqPtr<T>();
+        auto append = [&](T val) {Insert(val);};
+        tree.Traverse(tree.head, append, ARBITRARY_ORDER);
+        cmp = tree.cmp;
+        return *this;
+    }
+
+    BinaryTree<T> operator=(BinaryTree<T>&& tree) {
+        head = std::move(tree.head);
+        cmp = tree.cmp;
+        return *this;
     }
 };
 
