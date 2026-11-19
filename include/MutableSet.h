@@ -1,6 +1,7 @@
 #ifndef MUTABLESET_H
 #define MUTABLESET_H
 
+#include <sstream>
 #include "BinaryTree.h"
 #include "ISet.h"
 
@@ -68,6 +69,14 @@ public:
 
     T Reduce(T (*func)(T, T), T initial) {
         return tree->Reduce(func, initial, ARBITRARY_ORDER);
+    }
+
+    std::string ToString(std::string (*toText)(T)) {
+        return tree->ToString(toText, ARBITRARY_ORDER);
+    }
+
+    void FromString(std::string text, T (*fromText)(T)) {
+        tree->FromString(text, fromText);
     }
 
     MutableSet<T> operator=(MutableSet<T>& set) {
